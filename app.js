@@ -33,3 +33,4 @@ app.set("views", path.resolve(__dirname, 'views'));
 var picPath = path.resolve(__dirname, 'public');
 
 app.use(express.static(picPath));
+app.use(bodyParser.urlencoded({ extended: false }))
