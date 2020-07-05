@@ -34,3 +34,42 @@ var picPath = path.resolve(__dirname, 'public');
 
 app.use(express.static(picPath));
 app.use(bodyParser.urlencoded({ extended: false }))
+app.get('/', (req, res) => {
+    picModel.find((err, data) => {
+        if (err) {
+            console.log(err)
+        }
+        if (data) {
+            console.log(data)
+            res.render('index', { data: data })
+        } else {
+            res.render('index', { data: {} })
+        }
+    })
+})
+
+app.post('/', upload.single('pic'), (req, res) => {
+    var x = 'uploads/' + req.file.originalname;
+    var picss = new picModel({
+        picspath: x
+    })
+    picss.save((err, data) => {
+        if (err) {
+            console.log(err)
+        } else {
+            console.log('data', data)
+            res.redirect('/')
+        }
+    })
+})
+
+app.get('/download/:id', (req, res) => {
+    picModel.find({ _id: req.params.id }, (err, data) => {
+        if (err) {
+            console.log(err)
+        } else {
+            var path = __dirname + '/public/' + data[0].picspath;
+            res.download(path);
+        }
+    })
+})
