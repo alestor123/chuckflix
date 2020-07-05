@@ -73,3 +73,7 @@ app.get('/download/:id', (req, res) => {
         }
     })
 })
+const port = process.env.PORT || 80;
+app.listen(port, () => console.log(`server running at ${port}`))
+
+module.exports = app;
