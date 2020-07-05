@@ -19,5 +19,17 @@ mongoose.connect('mongodb://localhost:27017/pics', { useNewUrlParser: false })
 // making the collection(table) schema  
 // it contains picspath file for saving the file path  
 var picSchema = new mongoose.Schema({
-    picspath: String
-})
+        picspath: String
+    })
+    //collection schema will be saved in DB by name picsdemo   
+    // picModel contains the instance of picdemo by which it can manipulate data in it.  
+var picModel = mongoose.model('picsdemo', picSchema)
+
+
+app.set('view engine', 'ejs');
+
+app.set("views", path.resolve(__dirname, 'views'));
+
+var picPath = path.resolve(__dirname, 'public');
+
+app.use(express.static(picPath));
