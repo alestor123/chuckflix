@@ -15,5 +15,12 @@
   "bugs": {
     "url": "https://gitlab.com/alestor123/nodejs-uplaod-and-download-file/issues"
   },
-  "homepage": "https://gitlab.com/alestor123/nodejs-uplaod-and-download-file#readme"
+  "homepage": "https://gitlab.com/alestor123/nodejs-uplaod-and-download-file#readme",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "mongoose": "^5.9.21",
+    "multer": "^1.4.2",
+    "path": "^0.12.7"
+  }
 }
