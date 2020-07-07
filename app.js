@@ -13,7 +13,7 @@ var express = require('express'),
         }
     }),
     upload = multer({ storage: storage });
-mongoose.connect('mongodb://localhost:27017/pics', { useNewUrlParser: false })
+mongoose.connect('mongodb://localhost:27017/movs-2nd', { useNewUrlParser: false })
     .then(() => console.log('connect')).catch(err => console.log(err))
 
 // making the collection(table) schema  
@@ -34,6 +34,22 @@ var picPath = path.resolve(__dirname, 'public');
 
 app.use(express.static(picPath));
 app.use(bodyParser.urlencoded({ extended: false }))
+
+app.get('/upload', (req, res) => {
+    picModel.find((err, data) => {
+        if (err) {
+            console.log(err)
+        }
+        if (data) {
+            console.log(data)
+            res.render('upload', { data: data })
+        } else {
+            res.render('upload', { data: {} })
+        }
+    })
+})
+
+
 app.get('/', (req, res) => {
     picModel.find((err, data) => {
         if (err) {
@@ -47,6 +63,22 @@ app.get('/', (req, res) => {
         }
     })
 })
+
+app.post('/upload', upload.single('pic'), (req, res) => {
+    var x = 'uploads/' + req.file.originalname;
+    var picss = new picModel({
+        picspath: x
+    })
+    picss.save((err, data) => {
+        if (err) {
+            console.log(err)
+        } else {
+            console.log('data', data)
+            res.redirect('/')
+        }
+    })
+})
+
 
 app.post('/', upload.single('pic'), (req, res) => {
     var x = 'uploads/' + req.file.originalname;
