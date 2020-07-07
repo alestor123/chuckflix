@@ -286,9 +286,6 @@
 
                 <tr><video width="320" height="240" controls><source src="<%= data[i].picspath %>" type="video/mp4"><source src="<%= data[i].picspath %>" type="video/ogg">Your browser does not support the video tag. </video>
             </div>
-            <td>
-                <form action="/download/<%= data[i]._id %>" method="GET"><input type="submit" value="Download"></form>
-            </td>
             </tr>
             <%
         }
