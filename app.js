@@ -105,6 +105,11 @@ app.get('/download/:id', (req, res) => {
         }
     })
 })
+app.use(function(req, res, next) {
+    res.status(404);
+    res.render('404');
+});
+
 const port = process.env.PORT || 80;
 app.listen(port, () => console.log(`server running at ${port}`))
 
