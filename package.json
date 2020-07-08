@@ -4,8 +4,9 @@
     "description": "This is a simple node js express sample code for upload and downlaod file for more info check out README.md docs ",
     "main": "app.js",
     "scripts": {
-        "start": "node app.js"
+        "start": "node app.js",
         "test": "echo \"Error: no test specified\" && exit 1"
+
     },
     "repository": {
         "type": "git",
