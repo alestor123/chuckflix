@@ -1,26 +1,10 @@
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
-<style>
-    .jumbotron {
-        width: 400;
-        left: 50%;
-        margin: auto;
-        width: 50%;
-        padding-top: 30;
-        border: 3px solid green;
-        padding: 10px;
-        top: 50%
-    }
-    
-    body {
-        background-color: rgb(35, 46, 36)
-    }
-</style>
+<%- include ("../views/partials/header") %>
 
-<body>
-    <div class="jumbotron">
-        <h1>Upload Files</h1>
-        <form action="/" method="POST" enctype="multipart/form-data"><input type="file" name="pic" class="btn btn-danger"><br><input type="submit" value="Upload" class="btn btn-primary">
-            <a type="button" href="/" class=" btn btn-warning ">Go Back</a>
-        </form><br><br><br><br></div>
+    <body>
+        <div class="jumbotron">
+            <h1>Upload Files</h1>
+            <form action="/" method="POST" enctype="multipart/form-data"><input type="file" name="pic" class="btn btn-danger"><br><input type="submit" value="Upload" class="btn btn-primary">
+                <a type="button" href="/" class=" btn btn-warning ">Go Back</a>
+            </form><br><br><br><br></div>
 
-</body>
+    </body>
