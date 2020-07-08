@@ -50,6 +50,10 @@
     }
 }
 
+#row {
+    justify-content: flex;
+}
+
 a:hover {
     background-color: red;
 }
@@ -64,7 +68,9 @@ body {
 }
 
 .mySlides {
-    display: none
+    display: none;
+    justify-content: flex;
+    padding-bottom: 5ch;
 }
 
 img {
@@ -119,9 +125,8 @@ img {
 /* Caption text */
 
 .column {
-    float: left;
     width: 33.33%;
-    padding: 5px;
+    padding: 2%;
 }
 
 
@@ -131,6 +136,21 @@ img {
     content: "";
     clear: both;
     display: table;
+}
+
+.jumbotron {
+    width: 400;
+    left: 50%;
+    margin: auto;
+    width: 50%;
+    padding-top: 30;
+    border: 3px solid green;
+    padding: 10px;
+    top: 50%
+}
+
+body {
+    background-color: rgb(35, 46, 36)
 }
 
 * {
