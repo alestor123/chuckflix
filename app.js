@@ -13,7 +13,7 @@ var express = require('express'),
         }
     }),
     upload = multer({ storage: storage });
-mongoose.connect('mongodb://localhost:27017/movs-3rd', { useNewUrlParser: false })
+mongoose.connect('mongodb://localhost:27017/movs-3rd', { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log('connect')).catch(err => console.log(err))
 
 // making the collection(table) schema  
