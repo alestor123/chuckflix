@@ -50,6 +50,59 @@ app.get('/upload', (req, res) => {
 })
 
 
+app.get('/movies', (req, res) => {
+    picModel.find((err, data) => {
+        if (err) {
+            console.log(err)
+        }
+        if (data) {
+            console.log(data)
+            res.render('index', { data: data, title: "Movie" })
+        } else {
+            res.render('index', { data: {} })
+        }
+    })
+})
+
+app.get('/images', (req, res) => {
+    picModel.find((err, data) => {
+        if (err) {
+            console.log(err)
+        }
+        if (data) {
+            console.log(data)
+            res.render('index', { data: data, title: "Pictures" })
+        } else {
+            res.render('index', { data: {} })
+        }
+    })
+})
+app.get('/video', (req, res) => {
+    picModel.find((err, data) => {
+        if (err) {
+            console.log(err)
+        }
+        if (data) {
+            console.log(data)
+            res.render('index', { data: data, title: "Video" })
+        } else {
+            res.render('index', { data: {} })
+        }
+    })
+})
+app.get('/tv', (req, res) => {
+    picModel.find((err, data) => {
+        if (err) {
+            console.log(err)
+        }
+        if (data) {
+            console.log(data)
+            res.render('index', { data: data, title: "TV" })
+        } else {
+            res.render('index', { data: {} })
+        }
+    })
+})
 app.get('/', (req, res) => {
     picModel.find((err, data) => {
         if (err) {
@@ -60,6 +113,19 @@ app.get('/', (req, res) => {
             res.render('index', { data: data, title: "Home" })
         } else {
             res.render('index', { data: {} })
+        }
+    })
+})
+app.get('/music', (req, res) => {
+    picModel.find((err, data) => {
+        if (err) {
+            console.log(err)
+        }
+        if (data) {
+            console.log(data)
+            res.render('music', { data: data, title: "Music" })
+        } else {
+            res.render('music', { data: {} })
         }
     })
 })
