@@ -58,9 +58,9 @@ app.get('/movies', (req, res) => {
         }
         if (data) {
             console.log(data)
-            res.render('movies', { data: data, title: "Movie" })
+            res.render('movie', { data: data, title: "Movie" })
         } else {
-            res.render('movies', { data: {} })
+            res.render('movie', { data: {} })
         }
     })
 })
