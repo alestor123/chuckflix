@@ -42,7 +42,7 @@ app.get('/upload', (req, res) => {
         }
         if (data) {
             console.log(data)
-            res.render('upload', { data: data })
+            res.render('upload', { data: data, title: "Upload" })
         } else {
             res.render('upload', { data: {} })
         }
@@ -57,7 +57,7 @@ app.get('/', (req, res) => {
         }
         if (data) {
             console.log(data)
-            res.render('index', { data: data })
+            res.render('index', { data: data, title: "Home" })
         } else {
             res.render('index', { data: {} })
         }
