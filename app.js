@@ -58,9 +58,9 @@ app.get('/movies', (req, res) => {
         }
         if (data) {
             console.log(data)
-            res.render('index', { data: data, title: "Movie" })
+            res.render('movies', { data: data, title: "Movie" })
         } else {
-            res.render('index', { data: {} })
+            res.render('movies', { data: {} })
         }
     })
 })
@@ -72,9 +72,9 @@ app.get('/images', (req, res) => {
         }
         if (data) {
             console.log(data)
-            res.render('index', { data: data, title: "Pictures" })
+            res.render('images', { data: data, title: "Pictures" })
         } else {
-            res.render('index', { data: {} })
+            res.render('images', { data: {} })
         }
     })
 })
@@ -85,9 +85,9 @@ app.get('/video', (req, res) => {
         }
         if (data) {
             console.log(data)
-            res.render('index', { data: data, title: "Video" })
+            res.render('video', { data: data, title: "Video" })
         } else {
-            res.render('index', { data: {} })
+            res.render('video', { data: {} })
         }
     })
 })
@@ -98,9 +98,9 @@ app.get('/tv', (req, res) => {
         }
         if (data) {
             console.log(data)
-            res.render('index', { data: data, title: "TV" })
+            res.render('tv', { data: data, title: "TV" })
         } else {
-            res.render('index', { data: {} })
+            res.render('tv', { data: {} })
         }
     })
 })
