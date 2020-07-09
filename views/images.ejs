@@ -7,13 +7,13 @@
 
             <div class="column">
 
-                <tr><video width="320" height="240" controls><source src="<%= data[i].picspath %>" type="video/mp4"><source src="<%= data[i].picspath %>" type="video/ogg">Your browser does not support the video tag. </video>
-            </div>
-            </tr>
-            <%
+                <tr><img src="%= data[i].picspath %>">
+                    < </div>
+                </tr>
+                <%
         }
                 %>
-                </tbody>
-                </table>
-    </div>
-    <%- include ("../views/partials/footer") %>
+                    </tbody>
+                    </table>
+            </div>
+            <%- include ("../views/partials/footer") %>

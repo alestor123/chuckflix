@@ -130,6 +130,9 @@ app.get('/music', (req, res) => {
         }
     })
 })
+app.get('/about', (req, res) => {
+    res.render('about', { title: "About" })
+})
 
 app.post('/upload', upload.single('pic'), (req, res) => {
     var x = 'uploads/' + req.file.originalname;
@@ -148,7 +151,7 @@ app.post('/upload', upload.single('pic'), (req, res) => {
 
 
 app.post('/', upload.single('pic'), (req, res) => {
-    var x = 'uploads/' + req.file.originalname;
+    var x = 'uploads/main/' + req.file.originalname;
     var picss = new picModel({
         picspath: x
     })
