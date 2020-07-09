@@ -6,7 +6,7 @@ var express = require('express'),
     app = express(),
     storage = multer.diskStorage({
         destination: function(req, file, cb) {
-            cb(null, './public/uploads')
+            cb(null, './public/uploads/main')
         },
         filename(req, file, cb) {
             cb(null, file.originalname)
@@ -19,7 +19,8 @@ mongoose.connect('mongodb://localhost:27017/movs-3rd', { useNewUrlParser: true, 
 // making the collection(table) schema  
 // it contains picspath file for saving the file path  
 var picSchema = new mongoose.Schema({
-        picspath: String
+        picspath: String,
+        movspath: String
     })
     //collection schema will be saved in DB by name picsdemo   
     // picModel contains the instance of picdemo by which it can manipulate data in it.  
