@@ -134,6 +134,10 @@ app.get('/about', (req, res) => {
     res.render('about', { title: "About" })
 })
 
+app.get('/settings', (req, res) => {
+    res.render('settings', { title: "Settings" })
+})
+
 app.post('/upload', upload.single('pic'), (req, res) => {
     var x = 'uploads/' + req.file.originalname;
     var picss = new picModel({
