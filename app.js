@@ -1,190 +1,49 @@
-var express = require('express'),
-    bodyParser = require('body-parser'),
-    multer = require('multer'),
-    mongoose = require('mongoose'),
-    path = require('path'),
-    app = express(),
-    storage = multer.diskStorage({
-        destination: function(req, file, cb) {
-            cb(null, './public/uploads/main')
-        },
-        filename(req, file, cb) {
-            cb(null, file.originalname)
-        }
-    }),
-    upload = multer({ storage: storage });
-mongoose.connect('mongodb://localhost:27017/movs-3rd', { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => console.log('connect')).catch(err => console.log(err))
+require('dotenv').config();
+const express = require('express');
+const mongoose = require('mongoose');
+const session = require('express-session');
+const path = require('path');
 
-// making the collection(table) schema  
-// it contains picspath file for saving the file path  
-var picSchema = new mongoose.Schema({
-        picspath: String,
-        movspath: String
-    })
-    //collection schema will be saved in DB by name picsdemo   
-    // picModel contains the instance of picdemo by which it can manipulate data in it.  
-var picModel = mongoose.model('picsdemo', picSchema)
+const app = express();
 
-
-app.set('view engine', 'ejs');
-
-app.set("views", path.resolve(__dirname, 'views'));
-
-var picPath = path.resolve(__dirname, 'public');
-
-app.use(express.static(picPath));
-app.use(bodyParser.urlencoded({ extended: false }))
-
-app.get('/upload', (req, res) => {
-    picModel.find((err, data) => {
-        if (err) {
-            console.log(err)
-        }
-        if (data) {
-            console.log(data)
-            res.render('upload', { data: data, title: "Upload" })
-        } else {
-            res.render('upload', { data: {} })
-        }
-    })
-})
-
-
-app.get('/movies', (req, res) => {
-    picModel.find((err, data) => {
-        if (err) {
-            console.log(err)
-        }
-        if (data) {
-            console.log(data)
-            res.render('movie', { data: data, title: "Movie" })
-        } else {
-            res.render('movie', { data: {} })
-        }
-    })
-})
-
-app.get('/images', (req, res) => {
-    picModel.find((err, data) => {
-        if (err) {
-            console.log(err)
-        }
-        if (data) {
-            console.log(data)
-            res.render('images', { data: data, title: "Pictures" })
-        } else {
-            res.render('images', { data: {} })
-        }
-    })
-})
-app.get('/video', (req, res) => {
-    picModel.find((err, data) => {
-        if (err) {
-            console.log(err)
-        }
-        if (data) {
-            console.log(data)
-            res.render('video', { data: data, title: "Video" })
-        } else {
-            res.render('video', { data: {} })
-        }
-    })
-})
-app.get('/tv', (req, res) => {
-    picModel.find((err, data) => {
-        if (err) {
-            console.log(err)
-        }
-        if (data) {
-            console.log(data)
-            res.render('tv', { data: data, title: "TV" })
-        } else {
-            res.render('tv', { data: {} })
-        }
-    })
-})
-app.get('/', (req, res) => {
-    picModel.find((err, data) => {
-        if (err) {
-            console.log(err)
-        }
-        if (data) {
-            console.log(data)
-            res.render('index', { data: data, title: "Home" })
-        } else {
-            res.render('index', { data: {} })
-        }
-    })
-})
-app.get('/music', (req, res) => {
-    picModel.find((err, data) => {
-        if (err) {
-            console.log(err)
-        }
-        if (data) {
-            console.log(data)
-            res.render('music', { data: data, title: "Music" })
-        } else {
-            res.render('music', { data: {} })
-        }
-    })
-})
-app.get('/about', (req, res) => {
-    res.render('about', { title: "About" })
-})
-
-app.get('/settings', (req, res) => {
-    res.render('settings', { title: "Settings" })
-})
-
-app.post('/upload', upload.single('pic'), (req, res) => {
-    var x = 'uploads/' + req.file.originalname;
-    var picss = new picModel({
-        picspath: x
-    })
-    picss.save((err, data) => {
-        if (err) {
-            console.log(err)
-        } else {
-            console.log('data', data)
-            res.redirect('/')
-        }
-    })
-})
-
-
-app.post('/', upload.single('pic'), (req, res) => {
-    var x = 'uploads/main/' + req.file.originalname;
-    var picss = new picModel({
-        picspath: x
-    })
-    picss.save((err, data) => {
-        if (err) {
-            console.log(err)
-        } else {
-            console.log('data', data)
-            res.redirect('/')
-        }
-    })
-})
-
-app.get('/download/:id', (req, res) => {
-    picModel.find({ _id: req.params.id }, (err, data) => {
-        if (err) {
-            console.log(err)
-        } else {
-            var path = __dirname + '/public/' + data[0].picspath;
-            res.download(path);
-        }
-    })
-})
-app.use(function(req, res, next) {
-    res.status(404);
-    res.render('404');
+// Database connection
+mongoose.connect('mongodb://localhost:27017/chuckflix', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
 });
 
-const port = process.env.PORT || 80;
-app.listen(port, () => console.log(`server running at ${port}`))
+// Middleware
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.static('public'));
+app.set('view engine', 'ejs');
 
-module.exports = app;
+// Session configuration
+app.use(session({
+  secret: 'chuckflix-secret',
+  resave: false,
+  saveUninitialized: false
+}));
+// 404 Error Handler (add this at the end of your routes)
+
+// About page route
+app.get('/about', (req, res) => {
+    res.render('about', { 
+        user: req.session ? req.session.user : null 
+    });
+});
+
+// Routes
+app.use('/', require('./routes/auth'));
+app.use('/admin', require('./routes/admin'));
+app.use('/viewer', require('./routes/viewer'));
+app.use(function(req, res, next) {
+    res.status(404).render('404', { 
+        user: req.session ? req.session.user : null 
+    });
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Chuckflix running on port ${PORT}`);
+});

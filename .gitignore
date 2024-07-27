@@ -1,2 +1,14 @@
 node_modules
 /public/uploads/main/*
+.env
+.DS_Store
+/dist
+/dist/*
+/.vscode
+/.vscode/*
+/.idea
+/.idea/*
+/.nuxt
+/.nuxt/*
+/.nuxtignore
+/.nuxtignore/*  

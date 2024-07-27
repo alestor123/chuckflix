@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse Media - Chuckflix</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="site-header">
+        <div class="header-container">
+            <a href="/viewer/browse" class="site-logo">CHUCKFLIX</a>
+            <nav class="main-nav">
+                <ul class="nav-menu">
+                    <li><a href="/viewer/browse" class="active">Media</a></li>
+                    <li><a href="/viewer/browse?search=">Browse All</a></li>
+                </ul>
+                <div class="user-actions">
+                    <span style="color: var(--muted-text); font-size: 0.9rem;">Welcome, <%= user.username %></span>
+                    <form method="POST" action="/logout" style="display: inline;">
+                        <button type="submit" class="btn btn-secondary btn-sm">Logout</button>
+                    </form>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Search Section -->
+        <section class="search-section">
+            <div class="container">
+                <div class="search-container">
+                    <form method="GET" action="/viewer/browse" class="search-form">
+                        <input type="text" name="search" class="search-input" 
+                               placeholder="Search media by title or genre..." 
+                               value="<%= search || '' %>">
+                        <button type="submit" class="search-btn">Search</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Media Section -->
+        <section class="media-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <% if (search) { %>
+                            Search Results for "<%= search %>" (<%= videos.length %>)
+                        <% } else { %>
+                            Latest Media (<%= videos.length %>)
+                        <% } %>
+                    </h2>
+                    <div class="view-toggle">
+                        <button class="toggle-btn active">Grid</button>
+                        <button class="toggle-btn">List</button>
+                    </div>
+                </div>
+
+                <% if (videos.length === 0) { %>
+                    <div class="text-center" style="padding: 3rem;">
+                        <h3 style="color: var(--muted-text);">No media found</h3>
+                        <p style="color: var(--muted-text);">Try searching with different keywords</p>
+                        <a href="/viewer/browse" class="btn btn-primary mt-2">Browse All Media</a>
+                    </div>
+                <% } else { %>
+                    <div class="media-grid">
+                        <% videos.forEach(video => { %>
+                            <div class="media-card" onclick="window.location.href='/viewer/watch/<%= video._id %>'">
+                                <div class="media-poster">
+                                    <img src="/<%= video.thumbnailPath || 'uploads/thumbnails/default.jpg' %>" 
+                                         alt="<%= video.title %>"
+                                         onerror="this.src='/uploads/thumbnails/default.jpg'">
+                                    <div class="media-overlay">
+                                        <div class="media-actions">
+                                            <button class="action-btn">▶ Play</button>
+                                            <button class="action-btn secondary">Info</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="media-info">
+                                    <h3 class="media-title"><%= video.title %></h3>
+                                    <div class="media-meta">
+                                        <span class="media-year"><%= video.uploadDate.getFullYear() %></span>
+                                        <div class="media-rating">
+                                            <span><%= formatDuration(video.duration) %></span>
+                                        </div>
+                                    </div>
+                                    <% if (video.tags && video.tags.length > 0) { %>
+                                        <div class="media-genres">
+                                            <% video.tags.slice(0, 3).forEach(tag => { %>
+                                                <span class="genre-tag"><%= tag %></span>
+                                            <% }) %>
+                                        </div>
+                                    <% } %>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+                <% } %>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-links">
+                    <a href="/viewer/browse">Media</a>
+                    <a href="#about">About</a>
+                    <a href="#contact">Contact</a>
+                    <a href="#privacy">Privacy</a>
+                </div>
+                <p>&copy; 2024 Chuckflix. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // View toggle functionality
+        document.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= video.title %> - Chuckflix</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="site-header">
+        <div class="header-container">
+            <a href="/viewer/browse" class="site-logo">CHUCKFLIX</a>
+            <nav class="main-nav">
+                <div class="user-actions">
+                    <a href="/viewer/browse" class="btn btn-secondary btn-sm">← Back to Media</a>
+                    <form method="POST" action="/logout" style="display: inline;">
+                        <button type="submit" class="btn btn-secondary btn-sm">Logout</button>
+                    </form>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <section class="player-container">
+            <div class="container">
+                <div class="player-wrapper">
+                    <video controls class="video-player" preload="metadata" id="videoPlayer">
+                        <source src="/viewer/stream/<%= video.filename %>" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    
+                    <div class="player-info">
+                        <h1 class="player-title"><%= video.title %></h1>
+                        
+                        <div class="player-meta">
+                            <span><%= formatDuration(video.duration) %></span>
+                            <span><%= video.uploadDate.getFullYear() %></span>
+                            <span>👁 <%= video.views %> views</span>
+                        </div>
+                        
+                        <% if (video.description) { %>
+                            <p class="player-description"><%= video.description %></p>
+                        <% } %>
+                        
+                        <% if (video.tags && video.tags.length > 0) { %>
+                            <div class="media-genres">
+                                <% video.tags.forEach(tag => { %>
+                                    <span class="genre-tag"><%= tag %></span>
+                                <% }) %>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>&copy; 2024 Chuckflix. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const video = document.getElementById('videoPlayer');
+        const videoId = '<%= video._id %>';
+        
+        // Load saved progress
+        const savedTime = localStorage.getItem(`chuckflix_progress_${videoId}`);
+        if (savedTime && parseFloat(savedTime) > 5) {
+            video.currentTime = parseFloat(savedTime);
+        }
+        
+        // Save progress every 10 seconds
+        video.addEventListener('timeupdate', () => {
+            if (video.currentTime > 10) {
+                localStorage.setItem(`chuckflix_progress_${videoId}`, video.currentTime);
+            }
+        });
+        
+        // Clear progress when video ends
+        video.addEventListener('ended', () => {
+            localStorage.removeItem(`chuckflix_progress_${videoId}`);
+            
+            // Increment view count
+            fetch(`/viewer/increment-view/${videoId}`, { method: 'POST' });
+        });
+    </script>
+</body>
+</html>

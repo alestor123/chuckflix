@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Chuckflix</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="site-header">
+        <div class="header-container">
+            <a href="/admin/dashboard" class="site-logo">CHUCKFLIX ADMIN</a>
+            <nav class="main-nav">
+                <ul class="nav-menu">
+                    <li><a href="/admin/dashboard" class="active">Dashboard</a></li>
+                    <li><a href="/viewer/browse">View Site</a></li>
+                </ul>
+                <div class="user-actions">
+                    <span style="color: var(--muted-text); font-size: 0.9rem;">Admin: <%= user.username %></span>
+                    <form method="POST" action="/logout" style="display: inline;">
+                        <button type="submit" class="btn btn-secondary btn-sm">Logout</button>
+                    </form>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Admin Header -->
+        <section class="admin-header">
+            <div class="container">
+                <h1 class="admin-title">Dashboard</h1>
+                <p class="admin-subtitle">Manage your media collection and monitor platform statistics</p>
+            </div>
+        </section>
+
+        <div class="container">
+            <!-- Statistics -->
+            <div class="admin-stats">
+                <div class="stat-card">
+                    <span class="stat-number"><%= videos.length %></span>
+                    <div class="stat-label">Total Media</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number"><%= stats.totalViews || 0 %></span>
+                    <div class="stat-label">Total Views</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number"><%= stats.totalSize || 0 %>MB</span>
+                    <div class="stat-label">Storage Used</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">0</span>
+                    <div class="stat-label">Active Users</div>
+                </div>
+            </div>
+
+            <!-- Upload Section -->
+            <section class="upload-section">
+                <h2 class="upload-title">Upload New Media</h2>
+                <form method="POST" action="/admin/upload" enctype="multipart/form-data">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Media Title</label>
+                            <input type="text" name="title" class="form-control" placeholder="Enter media title" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Release Year</label>
+                            <input type="number" name="year" class="form-control" placeholder="2024" min="1900" max="2030">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-control" rows="3" placeholder="Enter media description"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Genres (comma separated)</label>
+                        <input type="text" name="tags" class="form-control" placeholder="Action, Thriller, Drama">
+                    </div>
+                 <div class="form-group">
+    <label class="form-label">Media File</label>
+    <div class="file-upload" id="fileUploadArea">
+        <input type="file" name="video" accept="video/*" required id="videoInput">
+        <div class="file-upload-text" id="uploadText">
+            <strong>Click to select media file</strong><br>
+            <small>Supported formats: MP4, AVI, MKV</small>
+        </div>
+    </div>
+    <div class="file-info" id="fileInfo" style="margin-top: 1rem; display: none;">
+        <div class="file-details">
+            <span class="file-name" id="fileName"></span>
+            <span class="file-size" id="fileSize"></span>
+        </div>
+        <div class="file-actions">
+            <button type="button" class="btn btn-secondary btn-sm" id="clearFile">Change File</button>
+        </div>
+    </div>
+</div>
+                    
+                    <button type="submit" class="btn btn-primary btn-lg">Upload Media</button>
+                </form>
+            </section>
+
+            <!-- Media Management -->
+            <section class="media-section">
+                <div class="section-header">
+                    <h2 class="section-title">Media Library</h2>
+                </div>
+                
+                <% if (videos.length === 0) { %>
+                    <div class="text-center" style="padding: 3rem;">
+                        <h3 style="color: var(--muted-text);">No media uploaded yet</h3>
+                        <p style="color: var(--muted-text);">Upload your first media to get started!</p>
+                    </div>
+                <% } else { %>
+                    <div class="media-grid">
+                        <% videos.forEach(video => { %>
+                            <div class="media-card">
+                                <div class="media-poster">
+                                    <img src="/<%= video.thumbnailPath || 'uploads/thumbnails/default.jpg' %>" 
+                                         alt="<%= video.title %>"
+                                         onerror="this.src='/uploads/thumbnails/default.jpg'">
+                                    <div class="media-overlay">
+                                        <div class="media-actions">
+                                            <a href="/viewer/watch/<%= video._id %>" class="action-btn">▶ Preview</a>
+                                            <form method="POST" action="/admin/delete/<%= video._id %>" style="display: inline;">
+                                                <button type="submit" class="action-btn secondary" 
+                                                        onclick="return confirm('Delete this media?')">🗑 Delete</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="media-info">
+                                    <h3 class="media-title"><%= video.title %></h3>
+                                    <div class="media-meta">
+                                        <span class="media-year"><%= video.uploadDate.getFullYear() %></span>
+                                        <div class="media-rating">
+                                            <span><%= formatDuration(video.duration) %></span>
+                                        </div>
+                                    </div>
+                                    <% if (video.tags && video.tags.length > 0) { %>
+                                        <div class="media-genres">
+                                            <% video.tags.forEach(tag => { %>
+                                                <span class="genre-tag"><%= tag %></span>
+                                            <% }) %>
+                                        </div>
+                                    <% } %>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+                <% } %>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>&copy; 2024 Chuckflix Admin Panel. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+
+<style>
+.file-info {
+    background: rgba(106, 192, 69, 0.1);
+    border: 1px solid var(--accent-primary);
+    border-radius: 4px;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.file-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.file-name {
+    font-weight: 500;
+    color: var(--accent-primary);
+}
+
+.file-size {
+    font-size: 0.8rem;
+    color: var(--muted-text);
+}
+
+.file-actions button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('videoInput');
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    const uploadText = document.getElementById('uploadText');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const clearButton = document.getElementById('clearFile');
+    
+    fileInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+            const file = e.target.files[0];
+            const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+            
+            // Update upload area
+            fileUploadArea.classList.add('has-file');
+            uploadText.innerHTML = `
+                <strong>✓ File Selected</strong><br>
+                <small>Ready to upload</small>
+            `;
+            
+            // Show file info
+            fileName.textContent = file.name;
+            fileSize.textContent = `${fileSizeMB} MB`;
+            fileInfo.style.display = 'flex';
+            
+            // Scroll to show the file info
+            fileInfo.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            
+        } else {
+            resetFileInput();
+        }
+    });
+    
+    clearButton.addEventListener('click', function() {
+        fileInput.value = '';
+        resetFileInput();
+    });
+    
+    function resetFileInput() {
+        fileUploadArea.classList.remove('has-file');
+        uploadText.innerHTML = `
+            <strong>Click to select media file</strong><br>
+            <small>Supported formats: MP4, AVI, MKV</small>
+        `;
+        fileInfo.style.display = 'none';
+    }
+});
+</script>
+</html>
