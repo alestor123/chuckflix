@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Chuckflix</title>
+    
+    <!-- Emoji Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>">
+    <link rel="stylesheet" href="/styles/signup.css">
+        <link rel="stylesheet" href="/css/signup.css">
+
+</head>
+<body>
+    <div class="signup-container">
+        <div class="signup-logo">
+            <h1>Chuckflix</h1>
+            <p class="signup-subtitle">Join the Streaming Experience</p>
+        </div>
+        
+        <% if (typeof error !== 'undefined') { %>
+            <div class="message error-message">
+                <%= error %>
+            </div>
+        <% } %>
+        
+        <% if (typeof success !== 'undefined') { %>
+            <div class="message success-message">
+                <%= success %>
+            </div>
+        <% } %>
+        
+        <form method="POST" action="/signup" class="signup-form" id="signupForm">
+            <div class="form-field">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" placeholder="Choose a unique username" required minlength="3" maxlength="20">
+            </div>
+            
+            <div class="form-field">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Create a strong password" required minlength="6">
+            </div>
+            
+            <div class="form-field">
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password" required>
+            </div>
+            
+            
+            <!-- Hidden input for role - ALWAYS viewer -->
+            <input type="hidden" name="role" value="viewer">
+            
+            <button type="submit" class="signup-btn" id="signupBtn">
+                Create Account
+            </button>
+        </form>
+        
+        <div class="signup-footer">
+            <p>Already have an account? <a href="/login">Sign In</a></p>
+            <p>By signing up, you agree to our Terms of Service and Privacy Policy</p>
+        </div>
+    </div>
+
+    <script>
+        // Form validation and enhancement
+        document.getElementById('signupForm').addEventListener('submit', function(e) {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const signupBtn = document.getElementById('signupBtn');
+            
+            // Check if passwords match
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                alert('Passwords do not match. Please try again.');
+                return false;
+            }
+            
+            // Check password strength
+            if (password.length < 6) {
+                e.preventDefault();
+                alert('Password must be at least 6 characters long.');
+                return false;
+            }
+            
+            // Show loading state
+            signupBtn.classList.add('loading');
+            signupBtn.disabled = true;
+        });
+        
+        // Real-time password confirmation
+        document.getElementById('confirmPassword').addEventListener('input', function() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = this.value;
+            
+            if (confirmPassword && password !== confirmPassword) {
+                this.style.borderColor = '#e74c3c';
+            } else {
+                this.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+            }
+        });
+        
+        // Remove loading state if there's an error
+        <% if (typeof error !== 'undefined') { %>
+            document.getElementById('signupBtn').classList.remove('loading');
+            document.getElementById('signupBtn').disabled = false;
+        <% } %>
+    </script>
+</body>
+</html>
