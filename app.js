@@ -3,7 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const path = require('path');
-
+const ChuckflixTelegramBot = require('./bot/telegramBot');
 const app = express();
 
 // Database connection
@@ -20,11 +20,29 @@ app.set('view engine', 'ejs');
 
 // Session configuration
 app.use(session({
-  secret: 'chuckflix-secret',
+  secret: process.env.SESSION_SECRET || 'chuckflix-secret',
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
+  cookie: {
+    secure: false, // Set to true in production with HTTPS
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
 }));
-// 404 Error Handler (add this at the end of your routes)
+
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+if (TELEGRAM_BOT_TOKEN) {
+  try {
+    const telegramBot = new ChuckflixTelegramBot(TELEGRAM_BOT_TOKEN);
+    console.log('🤖 Telegram bot initialized successfully');
+    console.log('📱 Bot ready to receive videos, torrents, and URLs');
+  } catch (error) {
+    console.error('❌ Failed to initialize Telegram bot:', error.message);
+  }
+} else {
+  console.warn('⚠️ TELEGRAM_BOT_TOKEN not found in environment variables');
+  console.warn('💡 Set TELEGRAM_BOT_TOKEN to enable automatic video downloads');
+}
+
 
 // About page route
 app.get('/about', (req, res) => {
