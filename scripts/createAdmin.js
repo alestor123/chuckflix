@@ -1,18 +1,24 @@
-const mongoose = require('mongoose');
-const User = require('./models/User');
+'use strict';
 
-mongoose.connect('mongodb://localhost:27017/chuckflix');
+require('dotenv').config();
+const { connectDB, closeDB } = require('../config/database');
+const users = require('../repositories/userRepository');
 
-async function createAdmin() {
-  const admin = new User({
-    username: 'admin',
-    password: 'lol123',
-    role: 'admin' // Change to 'admin' if you want to create an admin user
-  });
-  
-  await admin.save();
-  console.log('Admin user created');
-  process.exit();
+const username = process.argv[2] || process.env.ADMIN_USERNAME;
+const password = process.argv[3] || process.env.ADMIN_PASSWORD;
+if (!username || !password || password.length < 12) {
+  console.error('Usage: npm run create-admin -- <username> <password> (password must be at least 12 characters)');
+  process.exitCode = 1;
+} else {
+  try {
+    connectDB();
+    if (users.findByUsername(username)) throw new Error(`User ${username} already exists`);
+    users.create({ username, password, role: 'admin' });
+    console.log(`Admin account ${username} created.`);
+  } catch (error) {
+    console.error(`[create-admin] ${error.message}`);
+    process.exitCode = 1;
+  } finally {
+    closeDB();
+  }
 }
-
-createAdmin();

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Health - Chuckflix</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="site-header">
+        <div class="header-container">
+            <a href="/admin/dashboard" class="site-logo">CHUCKFLIX ADMIN</a>
+            <nav class="main-nav">
+                <ul class="nav-menu">
+                    <li><a href="/admin/dashboard">Dashboard</a></li>
+                    <li><a href="/viewer/browse">View Site</a></li>
+                    <li><a href="/health" class="active">Health</a></li>
+                </ul>
+                <div class="user-actions">
+                    <% if (typeof user !== 'undefined' && user) { %>
+                    <span style="color: var(--muted-text); font-size: 0.9rem;">Admin: <%= user.username %></span>
+                    <% } %>
+                    <form method="POST" action="/logout" style="display: inline;">
+                        <input type="hidden" name="csrfToken" value="<%= csrfToken %>">
+                        <button type="submit" class="btn btn-secondary btn-sm">Logout</button>
+                    </form>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <section class="admin-header">
+            <div class="container">
+                <h1 class="admin-title">System Health</h1>
+                <p class="admin-subtitle">Real-time status of Chuckflix services</p>
+            </div>
+        </section>
+
+        <div class="container" style="padding-top: 2rem; padding-bottom: 3rem;">
+
+            <!-- Overall status -->
+            <div class="health-overall-card">
+                <%
+                  var allOk = true;
+                  if (typeof health !== 'undefined' && health) {
+                    if (health.db && health.db.status !== 'ok') allOk = false;
+                    if (health.cache && health.cache.status !== 'ok' && health.cache.status !== 'disabled') allOk = false;
+                  }
+                %>
+                <span class="health-status-dot health-status-dot--<%= allOk ? 'ok' : 'error' %>"></span>
+                <span class="health-overall-label"><%= allOk ? 'All Systems Operational' : 'Degraded — Check Details Below' %></span>
+                <span class="health-ts">Last checked: <%= new Date().toISOString() %></span>
+            </div>
+
+            <!-- Health items grid -->
+            <div class="health-grid">
+
+                <!-- Database -->
+                <div class="health-card">
+                    <div class="health-card-header">
+                        <span class="health-icon">🗄</span>
+                        <span class="health-card-title">Database (MongoDB)</span>
+                        <% var dbStatus = (typeof health !== 'undefined' && health && health.db) ? health.db.status : 'unknown'; %>
+                        <span class="processing-badge processing-badge--<%= dbStatus === 'ok' ? 'completed' : (dbStatus === 'unknown' ? 'pending' : 'failed') %>">
+                            <%= dbStatus %>
+                        </span>
+                    </div>
+                    <% if (typeof health !== 'undefined' && health && health.db) { %>
+                    <div class="health-detail">
+                        <% if (health.db.latencyMs !== undefined) { %>
+                        <span class="health-detail-item">Latency: <%= health.db.latencyMs %>ms</span>
+                        <% } %>
+                        <% if (health.db.message) { %>
+                        <span class="health-detail-item health-detail-item--muted"><%= health.db.message %></span>
+                        <% } %>
+                    </div>
+                    <% } %>
+                </div>
+
+                <!-- Storage -->
+                <div class="health-card">
+                    <div class="health-card-header">
+                        <span class="health-icon"><%= (typeof health !== 'undefined' && health && health.storage && health.storage.mode === 's3') ? '☁' : '💾' %></span>
+                        <span class="health-card-title">Storage</span>
+                        <% var storStatus = (typeof health !== 'undefined' && health && health.storage) ? health.storage.status : 'unknown'; %>
+                        <span class="processing-badge processing-badge--<%= storStatus === 'ok' ? 'completed' : (storStatus === 'unknown' ? 'pending' : 'failed') %>">
+                            <%= storStatus %>
+                        </span>
+                    </div>
+                    <div class="health-detail">
+                        <% if (typeof health !== 'undefined' && health && health.storage) { %>
+                        <span class="health-detail-item">Mode: <%= health.storage.mode || 'local' %></span>
+                        <% if (health.storage.bucket) { %>
+                        <span class="health-detail-item health-detail-item--muted">Bucket: <%= health.storage.bucket %></span>
+                        <% } %>
+                        <% if (health.storage.message) { %>
+                        <span class="health-detail-item health-detail-item--muted"><%= health.storage.message %></span>
+                        <% } %>
+                        <% } else { %>
+                        <span class="health-detail-item health-detail-item--muted">Storage info unavailable</span>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Cache -->
+                <div class="health-card">
+                    <div class="health-card-header">
+                        <span class="health-icon">⚡</span>
+                        <span class="health-card-title">Cache</span>
+                        <% var cacheStatus = (typeof health !== 'undefined' && health && health.cache) ? health.cache.status : 'unknown'; %>
+                        <span class="processing-badge processing-badge--<%= cacheStatus === 'ok' ? 'completed' : (cacheStatus === 'disabled' ? 'pending' : (cacheStatus === 'unknown' ? 'pending' : 'failed')) %>">
+                            <%= cacheStatus %>
+                        </span>
+                    </div>
+                    <div class="health-detail">
+                        <% if (typeof health !== 'undefined' && health && health.cache) { %>
+                        <% if (health.cache.mode) { %>
+                        <span class="health-detail-item">Mode: <%= health.cache.mode %></span>
+                        <% } %>
+                        <% if (health.cache.message) { %>
+                        <span class="health-detail-item health-detail-item--muted"><%= health.cache.message %></span>
+                        <% } %>
+                        <% } else { %>
+                        <span class="health-detail-item health-detail-item--muted">Cache info unavailable</span>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Job Queue -->
+                <div class="health-card">
+                    <div class="health-card-header">
+                        <span class="health-icon">⚙</span>
+                        <span class="health-card-title">Job Queue</span>
+                        <% var queueStatus = (typeof health !== 'undefined' && health && health.queue) ? health.queue.status : 'unknown'; %>
+                        <span class="processing-badge processing-badge--<%= queueStatus === 'ok' ? 'completed' : (queueStatus === 'disabled' ? 'pending' : (queueStatus === 'unknown' ? 'pending' : 'failed')) %>">
+                            <%= queueStatus %>
+                        </span>
+                    </div>
+                    <div class="health-detail">
+                        <% if (typeof health !== 'undefined' && health && health.queue) { %>
+                        <% if (typeof health.queue.pending !== 'undefined') { %>
+                        <span class="health-detail-item">Pending: <%= health.queue.pending %></span>
+                        <% } %>
+                        <% if (typeof health.queue.processing !== 'undefined') { %>
+                        <span class="health-detail-item">Processing: <%= health.queue.processing %></span>
+                        <% } %>
+                        <% if (typeof health.queue.failed !== 'undefined') { %>
+                        <span class="health-detail-item <%= health.queue.failed > 0 ? 'health-detail-item--warn' : '' %>">Failed: <%= health.queue.failed %></span>
+                        <% } %>
+                        <% if (typeof health.queue.completed !== 'undefined') { %>
+                        <span class="health-detail-item">Completed: <%= health.queue.completed %></span>
+                        <% } %>
+                        <% if (health.queue.message) { %>
+                        <span class="health-detail-item health-detail-item--muted"><%= health.queue.message %></span>
+                        <% } %>
+                        <% } else { %>
+                        <span class="health-detail-item health-detail-item--muted">Queue info unavailable</span>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Raw JSON view -->
+            <details class="health-raw-details">
+                <summary>Raw JSON</summary>
+                <pre class="health-raw-pre"><%= JSON.stringify(typeof health !== 'undefined' ? health : {}, null, 2) %></pre>
+            </details>
+
+            <div style="margin-top: 1.5rem;">
+                <a href="/health" class="btn btn-secondary btn-sm">🔄 Refresh</a>
+                <a href="/admin/dashboard" class="btn btn-secondary btn-sm" style="margin-left: 0.5rem;">← Dashboard</a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>&copy; 2024 Chuckflix Admin Panel. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

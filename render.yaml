@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: chuckflix
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATA_DIR
+        value: /app/data
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: MAX_UPLOAD_MB
+        value: "100"

@@ -15,11 +15,13 @@
             <nav class="main-nav">
                 <ul class="nav-menu">
                     <li><a href="/admin/dashboard" class="active">Dashboard</a></li>
+                    <li><a href="/admin/system">System</a></li>
                     <li><a href="/viewer/browse">View Site</a></li>
                 </ul>
                 <div class="user-actions">
                     <span style="color: var(--muted-text); font-size: 0.9rem;">Admin: <%= user.username %></span>
                     <form method="POST" action="/logout" style="display: inline;">
+                        <input type="hidden" name="csrfToken" value="<%= csrfToken %>">
                         <button type="submit" class="btn btn-secondary btn-sm">Logout</button>
                     </form>
                 </div>
@@ -62,6 +64,7 @@
             <section class="upload-section">
                 <h2 class="upload-title">Upload New Media</h2>
                 <form method="POST" action="/admin/upload" enctype="multipart/form-data">
+                    <input type="hidden" name="csrfToken" value="<%= csrfToken %>">
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Media Title</label>
@@ -122,13 +125,14 @@
                         <% videos.forEach(video => { %>
                             <div class="media-card">
                                 <div class="media-poster">
-                                    <img src="/<%= video.thumbnailPath || 'uploads/thumbnails/default.jpg' %>" 
+                                     <img src="/viewer/thumbnail/<%= video.id %>"
                                          alt="<%= video.title %>"
-                                         onerror="this.src='/uploads/thumbnails/default.jpg'">
+                                         onerror="this.style.display='none'">
                                     <div class="media-overlay">
                                         <div class="media-actions">
                                             <a href="/viewer/watch/<%= video._id %>" class="action-btn">▶ Preview</a>
                                             <form method="POST" action="/admin/delete/<%= video._id %>" style="display: inline;">
+                                                <input type="hidden" name="csrfToken" value="<%= csrfToken %>">
                                                 <button type="submit" class="action-btn secondary" 
                                                         onclick="return confirm('Delete this media?')">🗑 Delete</button>
                                             </form>
@@ -138,6 +142,7 @@
                                 <div class="media-info">
                                     <h3 class="media-title"><%= video.title %></h3>
                                     <div class="media-meta">
+                                        <span><%= video.processing_status %></span>
                                         <span class="media-year"><%= video.uploadDate.getFullYear() %></span>
                                         <div class="media-rating">
                                             <span><%= formatDuration(video.duration) %></span>

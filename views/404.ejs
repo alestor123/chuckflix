@@ -96,6 +96,7 @@
                     <% if (typeof user !== 'undefined' && user) { %>
                         <span style="color: var(--muted-text); font-size: 0.9rem;">Welcome, <%= user.username %></span>
                         <form method="POST" action="/logout" style="display: inline;">
+                            <input type="hidden" name="csrfToken" value="<%= csrfToken %>">
                             <button type="submit" class="btn btn-secondary btn-sm">Logout</button>
                         </form>
                     <% } else { %>

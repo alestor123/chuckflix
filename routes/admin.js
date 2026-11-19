@@ -1,116 +1,124 @@
+'use strict';
+
 const express = require('express');
-const Video = require('../models/Video');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
-const { generateThumbnail, getVideoDuration } = require('../utils/thumbnailGenerator');
+const { maxFileSize } = require('../config/environment');
+const videos = require('../repositories/videoRepository');
+const storage = require('../services/storageService');
+const transcoding = require('../services/transcodingService');
+const { validateUpload } = require('../utils/mediaValidator');
+const { validateVideoFile } = require('../utils/ffprobeHelper');
+const cache = require('../services/cacheService');
+const { isValidCsrf } = require('../middleware/security');
+const { isConnected, dataDir } = require('../config/database');
+const ffprobeStatic = require('ffprobe-static');
+const ffmpegStatic = require('ffmpeg-static');
 
 const router = express.Router();
-const fs = require('fs');
-const multer = require('multer');
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, callback) => callback(null, storage.roots.temp),
+    filename: (_req, file, callback) => callback(null, storage.createKey(path.extname(file.originalname))),
+  }),
+  limits: { fileSize: maxFileSize, files: 1 },
+});
 
-const path = require('path');
-// Helper function for duration formatting
 const formatDuration = (seconds) => {
   if (!seconds) return '0:00';
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  }
-  return `${minutes}m`;
+  return hours ? `${hours}h ${minutes}m` : `${minutes}m`;
 };
 
-// Configure multer for video uploads
-const storage = multer.diskStorage({
-  destination: 'public/uploads/videos',
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
+router.post('/upload', requireAuth, requireAdmin, (req, res) => {
+  upload.single('video')(req, res, async (uploadError) => {
+    if (uploadError || !req.file) {
+      return res.redirect(`/admin/dashboard?error=${encodeURIComponent(uploadError?.message || 'Choose a video file')}`);
+    }
+    if (!isValidCsrf(req, req.body?.csrfToken || '')) {
+      fs.unlinkSync(req.file.path);
+      return res.status(403).send('Invalid CSRF token');
+    }
+    let storedKey;
+    try {
+      const { title, description, tags } = req.body;
+      if (!String(title || '').trim() || String(title).length > 160) throw new Error('A title of at most 160 characters is required');
+      const validation = validateUpload(req.file);
+      if (!validation.valid) throw new Error(validation.error);
+      await validateVideoFile(req.file.path);
+      storedKey = storage.putFile(req.file.path, 'originals');
+      const created = videos.create({
+        title: String(title).trim(),
+        description: String(description || '').slice(0, 5000),
+        tags: String(tags || '').split(',').map((tag) => tag.trim()).filter(Boolean).slice(0, 20),
+        originalFilename: path.basename(req.file.originalname).slice(0, 255),
+        storageKey: storedKey,
+        fileSize: req.file.size,
+      });
+      cache.invalidateVideo(created.id);
+      transcoding.enqueue(created.id);
+      return res.redirect('/admin/dashboard?success=Upload queued for processing');
+    } catch (error) {
+      if (storedKey) storage.deleteFile('originals', storedKey);
+      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      console.error(`[upload] ${error.message}`);
+      return res.redirect(`/admin/dashboard?error=${encodeURIComponent(error.message || 'Upload failed')}`);
+    }
+  });
+});
+
+router.get('/dashboard', requireAuth, requireAdmin, (req, res) => {
+  const allVideos = videos.listAll();
+  const stats = {
+    totalVideos: allVideos.length,
+    totalViews: allVideos.reduce((sum, video) => sum + video.views, 0),
+    totalSize: Math.round(allVideos.reduce((sum, video) => sum + video.fileSize, 0) / (1024 * 1024)),
+  };
+  res.render('admin/dashboard', { videos: allVideos, user: req.session.user, stats, formatDuration });
+});
+
+router.post('/delete/:id', requireAuth, requireAdmin, (req, res) => {
+  const video = videos.findById(req.params.id);
+  if (!video) return res.redirect('/admin/dashboard?error=Video not found');
+  try {
+    for (const variant of videos.variants(video.id)) storage.deleteFile('transcoded', variant.storage_key);
+    if (video.thumbnail_key) storage.deleteFile('thumbnails', video.thumbnail_key);
+    storage.deleteFile('originals', video.storage_key);
+    videos.deleteById(video.id);
+    cache.invalidateVideo(video.id);
+    return res.redirect('/admin/dashboard?success=Video deleted');
+  } catch (error) {
+    console.error(`[delete] ${error.message}`);
+    return res.redirect('/admin/dashboard?error=Delete failed');
   }
 });
 
-const upload = multer({ 
-  storage,
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('video/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only video files allowed'));
-    }
-  }
+function systemStatus() {
+  let storageWritable = false;
+  try { fs.accessSync(dataDir, fs.constants.W_OK); storageWritable = true; } catch { storageWritable = false; }
+  return {
+    cache: cache.stats(),
+    database: { connected: isConnected(), type: 'sqlite' },
+    ffmpeg: { available: Boolean(ffmpegStatic), ffprobe: Boolean(ffprobeStatic) },
+    storage: { directory: dataDir, writable: storageWritable },
+    processingQueue: { pending: transcoding.getQueueLength() },
+  };
+}
+
+router.get('/system', requireAuth, requireAdmin, (req, res) => {
+  res.render('admin/system', { user: req.session.user, status: systemStatus() });
 });
-router.post('/upload', requireAuth, requireAdmin, upload.single('video'), async (req, res) => {
-  try {
-    const { title, description, tags } = req.body;
-    const videoPath = req.file.path;
-    const thumbnailName = req.file.filename.replace(path.extname(req.file.filename), '.jpg');
-    const thumbnailPath = `public/uploads/thumbnails/${thumbnailName}`;
-    
-    // Generate thumbnail and get duration
-    await generateThumbnail(videoPath, thumbnailPath);
-    const duration = await getVideoDuration(videoPath);
-    
-    const video = new Video({
-      title,
-      description,
-      filename: req.file.filename,
-      originalName: req.file.originalname,
-      thumbnailPath: `uploads/thumbnails/${thumbnailName}`,
-      duration,
-      fileSize: req.file.size,
-      tags: tags ? tags.split(',').map(tag => tag.trim()) : []
-    });
-    
-    await video.save();
-    res.redirect('/admin/dashboard?success=Video uploaded successfully');
-  } catch (error) {
-    console.error('Upload error:', error);
-    res.redirect('/admin/dashboard?error=Upload failed');
-  }
+
+router.get('/system.json', requireAuth, requireAdmin, (_req, res) => {
+  res.json(systemStatus());
 });
-// Admin dashboard route
-router.get('/dashboard', requireAuth, requireAdmin, async (req, res) => {
-  try {
-    const videos = await Video.find().sort({ uploadDate: -1 });
-    const totalViews = videos.reduce((sum, video) => sum + video.views, 0);
-    const totalSize = videos.reduce((sum, video) => sum + (video.fileSize || 0), 0);
-    
-    res.render('admin/dashboard', { 
-      videos, 
-      user: req.session.user,
-      stats: {
-        totalVideos: videos.length,
-        totalViews,
-        totalSize: Math.round(totalSize / (1024 * 1024))
-      },
-      formatDuration // Pass the function to the template
-    });
-  } catch (error) {
-    res.redirect('/admin/dashboard?error=Failed to load dashboard');
-  }
+
+router.post('/cache/clear', requireAuth, requireAdmin, (_req, res) => {
+  cache.clear();
+  res.redirect('/admin/system');
 });
-router.post('/delete/:id', requireAuth, requireAdmin, async (req, res) => {
-  try {
-    const videoId = req.params.id;
-    const video = await Video.findById(videoId);
-    
-    if (video) {
-      // Delete video file
-      const videoPath = `public/uploads/videos/${video.filename}`;
-      if (fs.existsSync(videoPath)) {
-        fs.unlinkSync(videoPath);
-      }
-      
-      // Delete thumbnail
-      if (video.thumbnailPath && fs.existsSync(`public/${video.thumbnailPath}`)) {
-        fs.unlinkSync(`public/${video.thumbnailPath}`);
-      }
-      
-      await Video.findByIdAndDelete(videoId);
-    }
-    
-    res.redirect('/admin/dashboard?success=Video deleted successfully');
-  } catch (error) {
-    console.error('Delete error:', error);
-    res.redirect('/admin/dashboard?error=Delete failed');
-  }
-});
+
 module.exports = router;

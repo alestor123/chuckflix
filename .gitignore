@@ -13,3 +13,4 @@ node_modules
 /.nuxtignore
 /.nuxtignore/*  
 ./public/uploads/*
+/data/

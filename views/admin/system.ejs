@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System - Chuckflix</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header class="site-header">
+        <div class="header-container">
+            <a href="/admin/dashboard" class="site-logo">CHUCKFLIX ADMIN</a>
+            <nav class="main-nav"><a href="/admin/dashboard">Dashboard</a><a href="/admin/system" class="active">System</a></nav>
+        </div>
+    </header>
+    <main class="main-content">
+        <section class="admin-header"><div class="container"><h1 class="admin-title">System</h1></div></section>
+        <section class="media-section"><div class="container">
+            <h2>Metadata Cache</h2>
+            <div class="admin-stats">
+                <div class="stat-card"><span class="stat-number"><%= status.cache.hits %></span><div class="stat-label">Hits</div></div>
+                <div class="stat-card"><span class="stat-number"><%= status.cache.misses %></span><div class="stat-label">Misses</div></div>
+                <div class="stat-card"><span class="stat-number"><%= (status.cache.hitRate * 100).toFixed(1) %>%</span><div class="stat-label">Hit Rate</div></div>
+                <div class="stat-card"><span class="stat-number"><%= status.cache.entries %></span><div class="stat-label">Current Entries</div></div>
+                <div class="stat-card"><span class="stat-number"><%= status.cache.evictions %></span><div class="stat-label">Evictions</div></div>
+            </div>
+            <form method="POST" action="/admin/cache/clear">
+                <input type="hidden" name="csrfToken" value="<%= csrfToken %>">
+                <button class="btn btn-secondary" type="submit">Clear Metadata Cache</button>
+            </form>
+            <h2>Runtime</h2>
+            <dl>
+                <dt>SQLite</dt><dd><%= status.database.connected ? 'Connected' : 'Unavailable' %></dd>
+                <dt>FFmpeg / FFprobe</dt><dd><%= status.ffmpeg.available && status.ffmpeg.ffprobe ? 'Available' : 'Unavailable' %></dd>
+                <dt>Data directory</dt><dd><%= status.storage.directory %></dd>
+                <dt>Storage directory writable</dt><dd><%= status.storage.writable ? 'Yes' : 'No' %></dd>
+                <dt>Queued processing jobs</dt><dd><%= status.processingQueue.pending %></dd>
+            </dl>
+        </div></section>
+    </main>
+</body>
+</html>

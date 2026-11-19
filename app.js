@@ -1,47 +1,37 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
-const session = require('express-session');
 const path = require('path');
-const ChuckflixTelegramBot = require('./bot/telegramBot');
+const fs = require('fs');
+const { connectDB, closeDB, dataDir } = require('./config/database');
+const users = require('./repositories/userRepository');
+const { securityMiddleware, csrfProtection } = require('./middleware/security');
 const app = express();
 
-// Database connection
-mongoose.connect('mongodb://localhost:27017/chuckflix', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-});
+app.set('trust proxy', 1);
+connectDB();
+const sessionMiddleware = require('./config/session');
+if (process.env.ADMIN_USERNAME && process.env.ADMIN_PASSWORD && !users.findByUsername(process.env.ADMIN_USERNAME)) {
+  if (process.env.ADMIN_PASSWORD.length < 12) throw new Error('ADMIN_PASSWORD must be at least 12 characters');
+  users.create({ username: process.env.ADMIN_USERNAME, password: process.env.ADMIN_PASSWORD, role: 'admin' });
+  console.log('[startup] Initial admin account created from environment configuration');
+}
+for (const directory of ['originals', 'transcoded', 'thumbnails', 'temp']) {
+  fs.mkdirSync(path.join(dataDir, directory), { recursive: true, mode: 0o750 });
+}
 
 // Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use('/uploads', (_req, res) => res.sendStatus(404));
 app.use(express.static('public'));
+app.use(securityMiddleware);
 app.set('view engine', 'ejs');
-
-// Session configuration
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'chuckflix-secret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: false, // Set to true in production with HTTPS
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
-}));
-
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-if (TELEGRAM_BOT_TOKEN) {
-  try {
-    const telegramBot = new ChuckflixTelegramBot(TELEGRAM_BOT_TOKEN);
-    console.log('🤖 Telegram bot initialized successfully');
-    console.log('📱 Bot ready to receive videos, torrents, and URLs');
-  } catch (error) {
-    console.error('❌ Failed to initialize Telegram bot:', error.message);
-  }
-} else {
-  console.warn('⚠️ TELEGRAM_BOT_TOKEN not found in environment variables');
-  console.warn('💡 Set TELEGRAM_BOT_TOKEN to enable automatic video downloads');
-}
+app.use(sessionMiddleware);
+app.use((req, res, next) => {
+  res.locals.user = req.session.user || null;
+  next();
+});
+app.use(csrfProtection);
 
 
 // About page route
@@ -55,6 +45,9 @@ app.get('/about', (req, res) => {
 app.use('/', require('./routes/auth'));
 app.use('/admin', require('./routes/admin'));
 app.use('/viewer', require('./routes/viewer'));
+app.use('/api', require('./routes/api'));
+app.use('/health', require('./routes/health'));
+app.get('/healthz', (req, res) => res.status(200).json({ status: 'ok' }));
 app.use(function(req, res, next) {
     res.status(404).render('404', { 
         user: req.session ? req.session.user : null 
@@ -62,6 +55,28 @@ app.use(function(req, res, next) {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Chuckflix running on port ${PORT}`);
-});
+require('./services/transcodingService').resumePending();
+const server = require.main === module
+  ? app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Chuckflix ready on port ${PORT}`);
+    if (process.env.SEED_DEMO === 'true') {
+      require('./services/demoSeedService').seedDemoIfEmpty()
+        .then((ids) => ids.length && console.log(`[demo-seed] Queued ${ids.length} synthetic videos`))
+        .catch((error) => console.error(`[demo-seed] ${error.message}`));
+    }
+  })
+  : null;
+
+function shutdown() {
+  if (!server) return;
+  server.close(() => {
+    sessionMiddleware.store.close?.();
+    closeDB();
+    process.exit(0);
+  });
+}
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
+
+module.exports = app;

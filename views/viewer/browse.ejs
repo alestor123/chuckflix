@@ -20,6 +20,7 @@
                 <div class="user-actions">
                     <span style="color: var(--muted-text); font-size: 0.9rem;">Welcome, <%= user.username %></span>
                     <form method="POST" action="/logout" style="display: inline;">
+                        <input type="hidden" name="csrfToken" value="<%= csrfToken %>">
                         <button type="submit" class="btn btn-secondary btn-sm">Logout</button>
                     </form>
                 </div>
@@ -71,9 +72,9 @@
                         <% videos.forEach(video => { %>
                             <div class="media-card" onclick="window.location.href='/viewer/watch/<%= video._id %>'">
                                 <div class="media-poster">
-                                    <img src="/<%= video.thumbnailPath || 'uploads/thumbnails/default.jpg' %>" 
+                                     <img src="/viewer/thumbnail/<%= video.id %>"
                                          alt="<%= video.title %>"
-                                         onerror="this.src='/uploads/thumbnails/default.jpg'">
+                                         onerror="this.style.display='none'">
                                     <div class="media-overlay">
                                         <div class="media-actions">
                                             <button class="action-btn">▶ Play</button>
@@ -103,6 +104,31 @@
                 <% } %>
             </div>
         </section>
+
+        <% const shelves = [
+            { title: 'Recommended for You', items: recommended },
+            { title: 'Continue Watching', items: continueWatching },
+            { title: 'Trending', items: trending }
+        ]; %>
+        <% shelves.forEach(shelf => { if (shelf.items.length) { %>
+            <section class="media-section">
+                <div class="container">
+                    <div class="section-header"><h2 class="section-title"><%= shelf.title %></h2></div>
+                    <div class="media-grid">
+                        <% shelf.items.forEach(video => { %>
+                            <a class="media-card" href="/viewer/watch/<%= video.id %>">
+                                <div class="media-poster"><img src="/viewer/thumbnail/<%= video.id %>" alt="<%= video.title %>" onerror="this.style.display='none'"></div>
+                                <div class="media-info">
+                                    <h3 class="media-title"><%= video.title %></h3>
+                                    <% if (video.reason) { %><p><%= video.reason %></p><% } %>
+                                    <div class="media-meta"><span><%= formatDuration(video.duration) %></span></div>
+                                </div>
+                            </a>
+                        <% }) %>
+                    </div>
+                </div>
+            </section>
+        <% } }); %>
     </main>
 
     <!-- Footer -->
